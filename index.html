@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Twitch Emote Resizer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #1e1e2f;
+            color: #fff;
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #b066ff;
+        }
+
+        .upload-box {
+            border: 2px dashed #666;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            background-color: #2a2a3d;
+            transition: border-color 0.3s;
+        }
+
+        .upload-box.dragover {
+            border-color: #b066ff;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        label {
+            display: inline-block;
+            padding: 0.8rem 1.5rem;
+            margin-top: 1rem;
+            background-color: #b066ff;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .preview-container {
+            margin-top: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            justify-content: center;
+        }
+
+        .emote-preview {
+            background-color: #333;
+            padding: 1rem;
+            border-radius: 1rem;
+            text-align: center;
+            width: 140px;
+        }
+
+        .emote-preview img {
+            width: 100%;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .emote-preview a {
+            color: #b066ff;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            margin-top: 4rem;
+            text-align: center;
+            color: #888;
+        }
+
+        footer a {
+            color: #b066ff;
+            text-decoration: none;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        /* 🔄 Loader Styles */
+        .loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(30, 30, 47, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .loader {
+            border: 8px solid #444;
+            border-top: 8px solid #b066ff;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Twitch Emote Resizer</h1>
+
+<div class="upload-box" id="uploadBox">
+    <p>Ziehe ein Bild hierher oder</p>
+    <label for="imageInput">Bild auswählen</label>
+    <input type="file" id="imageInput" accept="image/*">
+</div>
+
+<div class="preview-container" id="previewContainer"></div>
+
+<!-- 🔄 Loader Overlay -->
+<div class="loader-overlay" id="loader">
+    <div class="loader"></div>
+    <div class="loader-text">Wird verarbeitet...</div>
+</div>
+
+<footer>
+    <p>❤️ Mit viel Herz programmiert von <strong>Gameware75</strong></p>
+    <p>🔓 <a href="https://github.com/Gameware75/emote-resizer" target="_blank">
+        Open Source auf GitHub
+    </a></p>
+</footer>
+
+<canvas id="canvas"></canvas>
+
+<script>
+    const imageInput = document.getElementById('imageInput');
+    const uploadBox = document.getElementById('uploadBox');
+    const previewContainer = document.getElementById('previewContainer');
+    const loader = document.getElementById('loader');
+
+    const sizes = [112, 56, 28];
+
+    function smartScale(img, targetSize) {
+        let offCanvas = document.createElement('canvas');
+        let offCtx = offCanvas.getContext('2d');
+        offCanvas.width = img.width;
+        offCanvas.height = img.height;
+        offCtx.imageSmoothingEnabled = true;
+        offCtx.imageSmoothingQuality = 'high';
+        offCtx.drawImage(img, 0, 0);
+
+        while (offCanvas.width * 0.5 > targetSize) {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = offCanvas.width * 0.5;
+            tempCanvas.height = offCanvas.height * 0.5;
+
+            tempCtx.imageSmoothingEnabled = true;
+            tempCtx.imageSmoothingQuality = 'high';
+            tempCtx.drawImage(offCanvas, 0, 0, tempCanvas.width, tempCanvas.height);
+
+            offCanvas = tempCanvas;
+            offCtx = tempCtx;
+        }
+
+        const finalCanvas = document.createElement('canvas');
+        const finalCtx = finalCanvas.getContext('2d');
+        finalCanvas.width = targetSize;
+        finalCanvas.height = targetSize;
+        finalCtx.imageSmoothingEnabled = true;
+        finalCtx.imageSmoothingQuality = 'high';
+        finalCtx.drawImage(offCanvas, 0, 0, finalCanvas.width, finalCanvas.height);
+
+        return finalCanvas;
+    }
+
+    function resizeAndShow(img) {
+        previewContainer.innerHTML = '';
+
+        sizes.forEach(size => {
+            const finalCanvas = smartScale(img, size);
+
+            finalCanvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+
+                const preview = document.createElement('div');
+                preview.classList.add('emote-preview');
+
+                const imageEl = document.createElement('img');
+                imageEl.src = url;
+                imageEl.alt = `${size}x${size}`;
+
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `emote_${size}x${size}.png`;
+                link.textContent = `Download ${size}x${size}`;
+
+                preview.appendChild(imageEl);
+                preview.appendChild(link);
+                previewContainer.appendChild(preview);
+            }, 'image/png');
+        });
+    }
+
+    function handleImage(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+                loader.style.display = 'flex';
+                setTimeout(() => {
+                    resizeAndShow(img);
+                    loader.style.display = 'none';
+                }, 2000);
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    imageInput.addEventListener('change', e => {
+        handleImage(e.target.files[0]);
+    });
+
+    uploadBox.addEventListener('dragover', e => {
+        e.preventDefault();
+        uploadBox.classList.add('dragover');
+    });
+
+    uploadBox.addEventListener('dragleave', () => {
+        uploadBox.classList.remove('dragover');
+    });
+
+    uploadBox.addEventListener('drop', e => {
+        e.preventDefault();
+        uploadBox.classList.remove('dragover');
+        handleImage(e.dataTransfer.files[0]);
+    });
+</script>
+</body>
+</html>
