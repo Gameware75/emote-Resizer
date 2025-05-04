@@ -3,140 +3,91 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Twitch Emote Resizer</title>
+    <title>Twitch Emote & Badge Resizer</title>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
         body {
             font-family: 'Segoe UI', sans-serif;
-            background-color: #1e1e2f;
-            color: #fff;
-            margin: 0;
+            background: #1e1e2f;
+            color: #ffffff;
+            text-align: center;
             padding: 2rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
         }
 
         h1 {
             font-size: 2rem;
             margin-bottom: 1rem;
-            color: #b066ff;
         }
 
         .upload-box {
-            border: 2px dashed #666;
-            border-radius: 1rem;
+            border: 2px dashed #aaa;
             padding: 2rem;
-            text-align: center;
-            width: 100%;
+            border-radius: 1rem;
+            margin: 1rem auto;
+            width: 90%;
             max-width: 500px;
-            background-color: #2a2a3d;
-            transition: border-color 0.3s;
+            background: #2e2e3e;
+            cursor: pointer;
         }
 
-        .upload-box.dragover {
-            border-color: #b066ff;
-        }
-
-        input[type="file"] {
+        .upload-box input {
             display: none;
         }
 
-        label {
+        .upload-box label {
             display: inline-block;
-            padding: 0.8rem 1.5rem;
-            margin-top: 1rem;
-            background-color: #b066ff;
+            padding: 0.5rem 1rem;
+            background: #4caf50;
+            color: #fff;
             border-radius: 0.5rem;
+            margin-top: 1rem;
             cursor: pointer;
             font-weight: bold;
+        }
+
+        .preview-switch {
+            margin-top: 2rem;
+        }
+
+        .preview-switch button {
+            margin: 0 0.5rem;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            background: #4caf50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
         }
 
         .preview-container {
             margin-top: 2rem;
             display: flex;
             flex-wrap: wrap;
-            gap: 2rem;
             justify-content: center;
+            gap: 1rem;
         }
 
         .emote-preview {
-            background-color: #333;
-            padding: 1rem;
+            background: #2e2e3e;
             border-radius: 1rem;
-            text-align: center;
-            width: 140px;
+            padding: 1rem;
+            width: 150px;
         }
 
         .emote-preview img {
-            width: 100%;
+            max-width: 100%;
             border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
         }
 
         .emote-preview a {
-            color: #b066ff;
+            display: block;
+            margin-top: 0.5rem;
+            color: #4caf50;
             text-decoration: none;
-            font-size: 0.9rem;
-        }
-
-        footer {
-            margin-top: 4rem;
-            text-align: center;
-            color: #888;
-        }
-
-        footer a {
-            color: #b066ff;
-            text-decoration: none;
-        }
-
-        canvas {
-            display: none;
-        }
-
-        /* 🔄 Loader Styles */
-        .loader-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(30, 30, 47, 0.9);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            flex-direction: column;
-        }
-
-        .loader {
-            border: 8px solid #444;
-            border-top: 8px solid #b066ff;
-            border-radius: 50%;
-            width: 60px;
-            height: 60px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 1rem;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loader-text {
-            color: #fff;
-            font-size: 1rem;
             font-weight: bold;
-
         }
+
         #zipDownloadBtn {
             margin-top: 2rem;
             padding: 0.8rem 1.5rem;
@@ -148,11 +99,52 @@
             cursor: pointer;
             display: none;
         }
+
+        footer {
+            margin-top: 4rem;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        footer a {
+            color: #4caf50;
+            text-decoration: none;
+        }
+
+        .loader-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #4caf50;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        .loader-text {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-
-<h1>Twitch Emote Resizer</h1>
+<h1>Twitch Emote & Badge Resizer</h1>
 
 <div class="upload-box" id="uploadBox">
     <p>Ziehe ein Bild hierher oder</p>
@@ -160,7 +152,12 @@
     <input type="file" id="imageInput" accept="image/*">
 </div>
 
-<div class="preview-container" id="previewContainer"></div>
+
+
+<div class="preview-container" id="previewContainer1"></div>
+<br>
+<div class="preview-container" id="previewContainer2"></div>
+
 
 <button id="zipDownloadBtn">📦 Alle als ZIP herunterladen</button>
 
@@ -171,23 +168,27 @@
 
 <footer>
     <p>❤️ Mit viel Herz programmiert von <strong>Gameware75</strong></p>
-    <p>🔓 <a href="https://github.com/Gameware75/emote-resizer" target="_blank">
-        Open Source auf GitHub
-    </a></p>
-    <p>Es werden keine Daten gespeichert oder übertragen. Alle Bilder werden lokal verarbeitet.</p>
+    <p>🔓 <a href="https://github.com/Gameware75/emote-resizer" target="_blank">Open Source auf GitHub</a></p>
+    <p>🔗 <a href="https://www.mein.online-impressum.de/gameware75/" target="_blank">Impressum</a></p>
+    <p>Die Bilder werden nicht gespeichert oder übertragen. Sie werden nur lokal verarbeitet.</p>
 </footer>
 
-<canvas id="canvas"></canvas>
+<canvas id="canvas" style="display:none;"></canvas>
 
 <script>
     const imageInput = document.getElementById('imageInput');
     const uploadBox = document.getElementById('uploadBox');
-    const previewContainer = document.getElementById('previewContainer');
+    const previewContainer = document.getElementById('previewContainer1');
+    const previewContainer2 = document.getElementById('previewContainer2');
     const loader = document.getElementById('loader');
     const zipDownloadBtn = document.getElementById('zipDownloadBtn');
 
-    const sizes = [112, 56, 28];
-    let zipFiles = {}; // Merkt sich alle PNGs für ZIP
+    const EMOTE_SIZES = [112, 56, 28];
+    const BADGE_SIZES = [72, 36, 18];
+
+    let zipFiles = {};
+    let allPreviews = { emote: [], badge: [] };
+    let originalImageBlob = null;
 
     function smartScale(img, targetSize) {
         let offCanvas = document.createElement('canvas');
@@ -223,46 +224,47 @@
         return finalCanvas;
     }
 
-    function resizeAndShow(img, originalName) {
+    function addPreviewAndZip(img, size, type) {
+        const canvas = smartScale(img, size);
+        canvas.toBlob(blob => {
+            const url = URL.createObjectURL(blob);
+            const preview = document.createElement('div');
+            preview.classList.add('emote-preview');
+            preview.setAttribute('data-type', type);
+
+            const imageEl = document.createElement('img');
+            imageEl.src = url;
+            imageEl.alt = `${type}_${size}x${size}`;
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${type}_${size}x${size}.png`;
+            link.textContent = `${type.toUpperCase()} ${size}x${size}`;
+
+            preview.appendChild(imageEl);
+            preview.appendChild(link);
+
+            // Append to the correct container based on type
+            if (type === 'emote') {
+                previewContainer1.appendChild(preview);
+            } else if (type === 'badge') {
+                previewContainer2.appendChild(preview);
+            }
+
+            allPreviews[type].push(preview);
+
+            if (!zipFiles[type]) zipFiles[type] = {};
+            zipFiles[type][`${type}_${size}x${size}.png`] = blob;
+        }, 'image/png');
+    }
+
+    function resizeAndShow(img) {
         previewContainer.innerHTML = '';
+        allPreviews = { emote: [], badge: [] };
         zipFiles = {};
 
-        // Original speichern
-        const originalCanvas = document.createElement('canvas');
-        originalCanvas.width = img.width;
-        originalCanvas.height = img.height;
-        const ctx = originalCanvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        originalCanvas.toBlob(blob => {
-            zipFiles[`original_${img.width}x${img.height}.png`] = blob;
-        });
-
-        sizes.forEach(size => {
-            const finalCanvas = smartScale(img, size);
-
-            finalCanvas.toBlob(blob => {
-                const url = URL.createObjectURL(blob);
-
-                const preview = document.createElement('div');
-                preview.classList.add('emote-preview');
-
-                const imageEl = document.createElement('img');
-                imageEl.src = url;
-                imageEl.alt = `${size}x${size}`;
-
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `emote_${size}x${size}.png`;
-                link.textContent = `Download ${size}x${size}`;
-
-                preview.appendChild(imageEl);
-                preview.appendChild(link);
-                previewContainer.appendChild(preview);
-
-                // Für ZIP speichern
-                zipFiles[`emote_${size}x${size}.png`] = blob;
-            }, 'image/png');
-        });
+        EMOTE_SIZES.forEach(size => addPreviewAndZip(img, size, 'emote'));
+        BADGE_SIZES.forEach(size => addPreviewAndZip(img, size, 'badge'));
 
         zipDownloadBtn.style.display = 'inline-block';
     }
@@ -275,8 +277,10 @@
             img.onload = () => {
                 loader.style.display = 'flex';
                 setTimeout(() => {
-                    resizeAndShow(img, file.name);
+                    originalImageBlob = file;
+                    resizeAndShow(img);
                     loader.style.display = 'none';
+                    showPreviews('all');
                 }, 2000);
             };
             img.src = reader.result;
@@ -284,9 +288,7 @@
         reader.readAsDataURL(file);
     }
 
-    imageInput.addEventListener('change', e => {
-        handleImage(e.target.files[0]);
-    });
+    imageInput.addEventListener('change', e => handleImage(e.target.files[0]));
 
     uploadBox.addEventListener('dragover', e => {
         e.preventDefault();
@@ -305,17 +307,23 @@
 
     zipDownloadBtn.addEventListener('click', () => {
         const zip = new JSZip();
-        const folder = zip.folder("emotes");
 
-        for (const [filename, blob] of Object.entries(zipFiles)) {
-            folder.file(filename, blob);
+        Object.entries(zipFiles).forEach(([type, files]) => {
+            const folder = zip.folder(type);
+            Object.entries(files).forEach(([filename, blob]) => {
+                folder.file(filename, blob);
+            });
+        });
+
+        if (originalImageBlob) {
+            zip.file('original.png', originalImageBlob);
         }
 
         zip.generateAsync({ type: "blob" }).then(content => {
             const zipURL = URL.createObjectURL(content);
             const a = document.createElement('a');
             a.href = zipURL;
-            a.download = 'twitch_emotes.zip';
+            a.download = `twitch_images.zip`;
             a.click();
         });
     });
