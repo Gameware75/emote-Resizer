@@ -20,18 +20,10 @@ Ein einfacher, aber stilvoller Web-Tool, um Bilder automatisch in die drei von T
 
 ---
 
-## 🖼️ Vorschau
-
-*(Füge hier ggf. Screenshots ein)*
-
-![Upload-Feld Vorschau](screenshots/upload.png)  
-![Emote-Preview](screenshots/previews.png)
-
----
 
 ## 🚀 Verwendung
 
-1. Klone dieses Repository oder lade die `emote-resizer.html` herunter
+1. Klone dieses Repository oder lade die `index.html` herunter
 2. Öffne die Datei lokal im Browser
 3. Ziehe dein Bild hinein oder wähle eine Datei aus
 4. Nach kurzer Verarbeitung erscheinen alle Größen als Vorschau mit Download-Button
