@@ -257,15 +257,18 @@
             zipFiles[type][`${type}_${size}x${size}.png`] = blob;
         }, 'image/png');
     }
-
     function resizeAndShow(img) {
-        previewContainer.innerHTML = '';
+        // Clear previous previews
+        previewContainer1.innerHTML = '';
+        previewContainer2.innerHTML = '';
         allPreviews = { emote: [], badge: [] };
         zipFiles = {};
 
+        // Generate new previews
         EMOTE_SIZES.forEach(size => addPreviewAndZip(img, size, 'emote'));
         BADGE_SIZES.forEach(size => addPreviewAndZip(img, size, 'badge'));
 
+        // Show the download button
         zipDownloadBtn.style.display = 'inline-block';
     }
 
